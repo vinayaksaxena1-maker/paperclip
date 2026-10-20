@@ -2,7 +2,7 @@ import { idleWorkSnapshot } from "./task-admission.js";
 import { readIdleLocalWork, type IdleLocalWork } from "./idle-local-work.js";
 import { readIdleRoutineSchedule, type ScheduledWake } from "./idle-scheduled-work.js";
 import { combineIdleSchedules, readIdleIssueSchedule } from "./idle-issue-schedule.js";
-import { connectionDeliveryWaitingForResponse, finishedIdleRun as finishedRun, finishedIdleWake, passiveBoardRecovery } from "./idle-work-proof.js";
+import { connectionDeliveryWaitingForResponse, finishedIdleRun as finishedRun, finishedIdleWake, finishedFailedIdleLease as finishedFailedLease, passiveBoardRecovery } from "./idle-work-proof.js";
 import type { Db } from "@paperclipai/db";
 import { sql } from "drizzle-orm";
 import { verifiedResourceCleanup } from "./cleanup-verification-proof.js";
@@ -31,32 +31,6 @@ export type InspectIdlePlugins = (hold: { ownerId: string; expiresAt: number }) 
 // cleanup label alone is not provider termination proof. Require the exact
 // host-owned receipt and finished run, and retain all cleanup/export intents.
 // Aliases are fixed at the call sites, never supplied by a client.
-function finishedFailedLease(alias: string): string {
-  const receipt = `${alias}.metadata->'remoteExecutionTermination'`;
-  return `${alias}.status = 'failed' AND ${alias}.lease_policy = 'ephemeral'
-    AND ${alias}.released_at IS NOT NULL
-    AND COALESCE(${alias}.metadata->>'pendingCleanupInFlight', 'false') = 'false'
-    AND NOT (COALESCE(${alias}.metadata, '{}'::jsonb) ?| ARRAY['nativeWorkspaceExportResume', 'sandboxStopAndRetain'])
-    AND (( ${alias}.provider = 'local' AND ${alias}.provider_lease_id IS NULL
-      AND ${alias}.metadata->>'driver' = 'local'
-      AND ${receipt} IS NULL
-      AND EXISTS (SELECT 1 FROM environments local_environment
-        WHERE local_environment.id = ${alias}.environment_id AND local_environment.driver = 'local'))
-    OR (${alias}.cleanup_status = 'success' AND ${alias}.provider IS NOT NULL AND ${alias}.provider <> 'local'
-      AND ${alias}.provider_lease_id IS NOT NULL AND ${alias}.provider_lease_id <> ''
-      AND ((${receipt}->>'schema' = 'paperclip.remote-termination.v1'
-      AND ${receipt}->>'companyId' = ${alias}.company_id::text
-      AND ${receipt}->>'runId' = ${alias}.heartbeat_run_id::text
-      AND ${receipt}->>'leaseId' = ${alias}.id::text
-      AND ${receipt}->>'provider' = ${alias}.provider
-      AND ${receipt}->>'providerLeaseId' = ${alias}.provider_lease_id
-      AND ${receipt}->>'state' IN ('stopped', 'destroyed'))
-        OR (${verifiedResourceCleanup(alias, 'lease')}))))
-    AND ((${alias}.heartbeat_run_id IS NULL AND ${alias}.provider <> 'local'
-      AND (${verifiedResourceCleanup(alias, 'lease')})) OR EXISTS (SELECT 1 FROM heartbeat_runs r WHERE r.id = ${alias}.heartbeat_run_id
-      AND r.company_id = ${alias}.company_id
-      AND ${finishedRun("r")}))`;
-}
 
 // These are deliberately conservative. Completed agent runs and workspace
 // operations are history, not reasons to keep an otherwise idle instance up.
@@ -227,16 +201,21 @@ const WORK_CHECKS = [
         'connection-intent:' || d.interaction_id::text || ':rejected',
         'connection-intent:' || d.interaction_id::text || ':expired')
       AND (${finishedIdleWake('connection_wake')}) IS NOT TRUE)`,
+  // Saved private feedback and acknowledged uploads have no delivery job.
+  // Pending/failed exports and unfamiliar states retain the instance. A sent
+  // label requires its completion stamp and a cleared failure reason.
+  `SELECT 1 FROM feedback_exports WHERE (status = 'local_only'
+    OR (status = 'sent' AND exported_at IS NOT NULL AND failure_reason IS NULL)) IS NOT TRUE`,
   // These less common work sources fail closed on any retained state. Their
   // terminal-state exceptions can be added with tests for the owning service.
   ...[
     "chat_deliveries", "chat_publications", "chat_actions",
     "chat_completion_deliveries", "tool_action_requests", "tool_action_deliveries",
     "workspace_runtime_services",
-    "execution_workspace_runtime_leases", "pipeline_automation_executions",
+    "execution_workspace_runtime_leases",
     "native_run_finalizations", "company_transfer_runs", "decisions", "decision_effect_executions",
     "decision_archive_notification_outbox", "browser_use_sessions", "browser_use_runs",
-    "browser_use_browsers", "feedback_exports",
+    "browser_use_browsers",
     "company_secret_proposals",
     "mcp_oauth_grants", "mcp_mutation_receipts", "mcp_event_subscriptions",
     "mcp_event_deliveries", "mcp_attachment_uploads", "dot_agent_bindings",

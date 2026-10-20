@@ -6,17 +6,19 @@ navigation: {"section":"Apps, channels, and extensions","sectionOrder":50,"order
 
 Administrators expose selected tools through gateways and reusable access profiles, connect clients, manage tokens, and inspect gateway activity.
 
+Feature ID: `gateways-profiles`.
+
 Implementation: [gateways](../../ui/src/pages/apps/gateways/GatewaysList.tsx), [gateway detail](../../ui/src/pages/apps/gateways/GatewayDetail.tsx), [profiles](../../ui/src/pages/tools/profiles/ProfileWizard.tsx).
 
 Agent access: [companion](../agent-access-map/gateways-profiles.md).
 
 ## Sub-features
 
-- `gateway`: create/edit an endpoint backed by a tool access profile.
-- `profiles`: define reusable tool access configuration and inspect draft/detail state.
-- `client-connect`: copy the intended endpoint/configuration to an authorized test client.
-- `tokens`: create/revoke client credentials and verify their scope.
-- `activity`: inspect tool discovery/calls and explicit errors.
+- `gateway`: `gateways-profiles/gateway` — create/edit an endpoint backed by a tool access profile.
+- `profiles`: `gateways-profiles/profiles` — define reusable tool access configuration and inspect draft/detail state.
+- `client-connect`: `gateways-profiles/client-connect` — copy the intended endpoint/configuration to an authorized test client.
+- `tokens`: `gateways-profiles/tokens` — create/revoke client credentials and verify their scope.
+- `activity`: `gateways-profiles/activity` — inspect tool discovery/calls and explicit errors.
 
 ## How to get to it (user POV)
 
@@ -41,6 +43,12 @@ endpoint authorization independently of whether the admin UI is visible.
 
 Automated: [gateway service](../../server/src/__tests__/tool-gateway-service.test.ts), [connect client dialog](../../ui/src/pages/apps/gateways/ConnectClientDialog.test.tsx), and [token panel](../../ui/src/pages/apps/gateways/panels/TokensPanel.test.tsx) cover service/UI contracts.
 
+Gateway regressions also cover a failed remote call followed by a successful
+sibling tool call. Transient failures preserve the catalog. Authentication
+failures retain their access gates. Real HTTP timeout fixtures verify an explicit
+retry starts a fresh MCP session without replaying the failed action. These
+checks do not establish a live provider journey.
+
 Manual: Create a disposable gateway with one harmless tool, connect a client using its provided configuration, discover/call that tool, and inspect activity. Revoke the client token and confirm the same call fails. Test a tool outside the allowed set.
 
 ### `access-profile`
@@ -64,6 +72,8 @@ Manual: Create a bounded profile, choose its offered tools and options, save or 
 ### Storybook verification
 
 #### `tokens`
+
+Capability ID: `gateways-profiles/tokens`.
 
 Scope: ui
 Storybook: Mount current TokensPanel with issue controls, once-only token reveal, expiry/actions, revocation confirmation and failures. Old GatewaysTab fixtures and assistant OAuth revocation are insufficient.

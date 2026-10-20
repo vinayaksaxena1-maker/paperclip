@@ -6,17 +6,20 @@ navigation: {"section":"Oversight and operation","sectionOrder":70,"order":20}
 
 People inspect company health, recent activity, run history, and routine activity, then follow evidence back to the task or agent responsible.
 
+Feature ID: `activity`.
+
 Implementation: [dashboard](../../ui/src/pages/Dashboard.tsx), [live dashboard](../../ui/src/pages/DashboardLive.tsx), [audit hub](../../ui/src/pages/audit/AuditHub.tsx).
 
 Agent access: [companion](../agent-access-map/activity.md).
 
 ## Sub-features
 
-- `overview`: inspect the company dashboard and live-work summary.
-- `activity`: filter and page through recorded actor/resource events.
-- `runs`: find executions and follow their task/agent context.
-- `routine-audit`: inspect routine execution activity separately from its definition.
-- `timeline`: use the available timeline view to understand work over time.
+- `overview`: `activity/overview` — inspect the company dashboard and live-work summary.
+- `activity`: `activity/activity` — filter and page through recorded actor/resource events.
+- `runs`: `activity/runs` — find executions and follow their task/agent context.
+- `routine-audit`: `activity/routine-audit` — inspect routine execution activity separately from its definition.
+- `timeline`: `activity/timeline` — use the available timeline view to understand work over time.
+- `agent-commentary`: `activity/agent-commentary` — browse attributed agent suggestions and complaints.
 
 ## How to get to it (user POV)
 
@@ -55,6 +58,20 @@ entries without pagination. The tested RoutineAuditActivity component has no
 registered activity-route host; inspect execution links actually offered by
 the routine rather than treating that component test as a reachable journey.
 
+### `agent-commentary`
+
+Open Audit → Commentary (`/activity/commentary`). Search message text, filter by agent and suggestion/complaint,
+page through 50-message previews, and open a row to read the full message with its task/run links.
+Filters, page offsets and the selected entry are retained in the URL. Read access requires board company access and
+`commentary:view`, granted by default to all human company roles and backfilled for existing active
+human members. Task privacy applies to previews, counts and full messages; agent-action audit access is separate.
+All Audit tab destinations resolve in both the classic and streamlined layouts.
+
+Storybook: [production page and message journeys](../../ui/storybook/stories/activity/agent-commentary.stories.tsx)
+covers populated, filtered, long-message, paginated, empty, loading, failed, denied,
+linked-message, mobile and light states using synthetic API fixtures. These examples do
+not prove live database filtering or authorization.
+
 ## Gotchas
 
 - Audit/activity events, run-log rows, first-party Telemetry, and operator OpenTelemetry traces are separate data paths.
@@ -64,6 +81,8 @@ the routine rather than treating that component test as a reachable journey.
 ### Storybook verification
 
 #### `runs`
+
+Capability ID: `activity/runs`.
 
 Scope: ui
 Storybook: Mount AuditRuns selected status/agent/routine, linked task/agent, empty/loading/error/retry and 200-entry limit. Do not invent pagination.

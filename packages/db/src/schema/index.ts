@@ -253,3 +253,6 @@ export { executionWorkspaceRepositories } from "./execution_workspace_repositori
 export { executionWorkspaceRepositoryRoots } from "./execution_workspace_repository_roots.js";
 export { executionWorkspaceRepositoryAccess } from "./execution_workspace_repository_access.js";
 export * from "./fast_responses.js";
+export { companyObservability } from "./company_observability.js";
+
+export * from "./prompt_injection_prevention.js";

@@ -3,6 +3,8 @@
 Product map: [Local, SSH, and sandbox
 environments](../feature-map/execution-environments.md).
 
+Feature ID: `execution-environments`.
+
 Review date: 2026-10-12. Source commit: `f981fa3cc10cb8663a87dec60345fbff46d54d0a`.
 
 This is a source-reviewed baseline of representative operations and known gaps.
@@ -17,6 +19,8 @@ baseline commit and review depth remain for unrelated operations; no live agent
 or provider qualification is claimed by this update.
 
 ## `configuration`
+
+Capability ID: `execution-environments/configuration`.
 
 Review: `baseline`.
 
@@ -54,6 +58,8 @@ packages do not transfer platform qualification.
 
 ## `capabilities`
 
+Capability ID: `execution-environments/capabilities`.
+
 Review: `baseline`.
 
 API: `present` — representative operation IDs:
@@ -79,6 +85,8 @@ safe agent-readable capability listing is desired.
 
 ## `probe`
 
+Capability ID: `execution-environments/probe`.
+
 Review: `baseline`.
 
 API: `present` — representative operation IDs:
@@ -95,7 +103,8 @@ Both probe endpoints require a board actor that is local-implicit or an instance
 administrator; ordinary agent identity and company membership alone are denied.
 The saved sandbox probe also resolves company/environment and secret access
 before allocating a fresh lease. Its measurement is company-bound to an immutable
-image digest, effective provider configuration and active custom-image identity;
+image digest or verified Daytona snapshot ID, effective provider configuration
+and active custom-image identity;
 only confirmed cleanup permits recording it. A draft probe does not record saved
 qualification. Reading stored qualification does not lease/provision a target and
 does not grant an agent permission to probe or manage that target.
@@ -117,7 +126,8 @@ at the scoped commit. A connection-only success or a fixture cannot certify
 native compatibility, account authentication or agent access.
 
 Scoped Verification: `not-run` — on one authorized owned target, compare pinned
-image proof with mutable/snapshot and changed-config controls; require independent
+image and provider snapshot-ID proof with mutable-image, unverified-snapshot
+and changed-config/account controls; require independent
 cleanup evidence before recording proof. Assert agent/non-admin board denial,
 secret-context denial where the actor lacks access and forged-proof rejection.
 Verify API reads hide the private record and metadata-only updates cannot overwrite it. Then use
@@ -128,6 +138,8 @@ human-action request/result handoff requires its own admitted path and verificat
 an accepted interaction does not turn the caller into a board administrator.
 
 ## `assignment`
+
+Capability ID: `execution-environments/assignment`.
 
 Review: `baseline`.
 
@@ -154,6 +166,8 @@ Gaps: Choosing among permitted targets differs from creating/configuring host ta
 test authorized and denied selection.
 
 ## `images`
+
+Capability ID: `execution-environments/images`.
 
 Review: `baseline`.
 

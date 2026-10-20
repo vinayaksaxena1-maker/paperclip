@@ -6,17 +6,19 @@ navigation: {"section":"Projects and execution","sectionOrder":40,"order":30}
 
 A project or task can use a managed workspace with inspectable files, Git state, services, and runtime controls. Operators can follow its lifecycle through provisioning, use, and closure.
 
+Feature ID: `workspaces`.
+
 Implementation: [workspace list](../../ui/src/pages/Workspaces.tsx), [execution workspace](../../ui/src/pages/ExecutionWorkspaceDetail.tsx), [project workspace](../../ui/src/pages/ProjectWorkspaceDetail.tsx).
 
 Agent access: [companion](../agent-access-map/workspaces.md).
 
 ## Sub-features
 
-- `binding`: identify the workspace actually bound to a task/run.
-- `provisioning`: observe readiness and failures instead of inferring readiness from a created record.
-- `services`: start/stop supported services and inspect logs and exposed endpoints.
-- `files-git`: inspect workspace files and repository state used for the deliverable.
-- `closure`: close/reopen or reconcile through permitted controls without losing work.
+- `binding`: `workspaces/binding` — identify the workspace actually bound to a task/run.
+- `provisioning`: `workspaces/provisioning` — observe readiness and failures instead of inferring readiness from a created record.
+- `services`: `workspaces/services` — start/stop supported services and inspect logs and exposed endpoints.
+- `files-git`: `workspaces/files-git` — inspect workspace files and repository state used for the deliverable.
+- `closure`: `workspaces/closure` — close/reopen or reconcile through permitted controls without losing work.
 
 For a historical failed export whose exact sandbox was destroyed, the task recovery
 notice offers **Continue from saved sources** to an authorized board operator.
@@ -55,24 +57,23 @@ Automated: [workspace card](../../ui/src/components/IssueWorkspaceCard.test.tsx)
 
 Manual: Run a task that writes a small file, follow the bound workspace, and inspect the file and revision. Reload and verify links still refer to the same workspace, not another checkout or a stale run.
 
-For fresh standard-trust tasks using an implicit repository default, create a
-disposable project checkout whose shared Git storage overlaps a private task
-workspace. Verify that source admission creates a separate checkout from the
-configured remote, with no private local branches, commits or shared Git storage.
-Reusing, closing and reopening that task must retain the company/task-bound source;
-a failed workspace save must clean up only its owned checkout. Explicit workspace,
-parent/channel selections, literal or task-independent branch templates, low-trust
-tasks, and local or credential-bearing remote
-URLs must not use this fallback. A selected checkout requires recorded default
-provenance. Create tasks
-through the task service with an explicit checkout ID or an inherited parent
-source but no typed selection; verify denial, no clone or environment acquisition,
-and preservation of unpublished branch commits. Older ambiguous bindings and
-source choices changed during preparation must retain the denial. The
-[remote-source tests](../../server/src/services/isolated-remote-workspace-source.test.ts)
-and [preparation tests](../../server/src/services/heartbeat/workspace-preparation.test.ts)
-exercise the real Git isolation and lifecycle guards. They do not qualify live
-remote credentials or a provider deployment.
+For slow source preparation, configure a short PostgreSQL idle-transaction
+timeout in a disposable instance. Hold preparation beyond that interval and
+verify it retains its source lock, rejects competing preparation, and leaves
+ordinary reads available. The [source-lock regression](../../server/src/services/isolated-remote-workspace-source-lock.test.ts)
+uses real PostgreSQL; it does not prove provider startup or deployed recovery.
+
+Create an authorized task whose selected checkout is also used by private historical
+tasks and many old workspace records. Start and reuse it without a historical-source
+permission failure or remote-clone fallback. Verify task-bound file browsing works,
+while private historical task content and operation logs remain denied through app
+APIs. Root traversal and symlink escapes must remain rejected. The OS and execution
+environment own isolation between agents; Paperclip does not classify existing bytes
+by the task that wrote them. Existing `workspace_source_restricted` failures remain
+inspectable and recoverable, but new preparation does not produce that failure from
+filesystem history. Current trust, credential, binding, and publication checks still
+apply. The preparation-history benchmark supplies local service measurements, not
+provider deployment qualification.
 
 For reconstructable Git expiration, finish a disposable task tree, run the
 internal lifecycle sweep after its 24-hour grace, and inspect candidate/reclaimed
@@ -157,6 +158,8 @@ Manual: Provision a disposable workspace, wait for readiness, start an available
 ### Storybook verification
 
 #### `closure`
+
+Capability ID: `workspaces/closure`.
 
 Scope: ui
 Storybook: Close-readiness checks, pending changes/active runs, blocked/pending/error close, retry close and eligible reopening.

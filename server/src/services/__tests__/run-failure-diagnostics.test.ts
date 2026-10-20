@@ -462,10 +462,12 @@ describe("run failure diagnostics", () => {
     const result = sanitizeRunFailureDiagnostics(collectRunFailureDiagnostics(run({ resultJson: {
       acpStalledToolKind: "other", acpStalledToolSilentMs: 1_800_000, acpStalledToolTitle: "private lookup",
       acpStalledToolPermissionRequested: false, acpPendingToolPermissionRequestedCount: 3,
+      acpSettledSameKindToolCount: 30, acpSettledSameKindToolPermissionRequestedCount: 29,
     } }), {}));
     expect(result.execution).toEqual({
       acpStalledToolKind: "other", acpStalledToolSilentMs: 1_800_000,
       acpStalledToolPermissionRequested: false, acpPendingToolPermissionRequestedCount: 3,
+      acpSettledSameKindToolCount: 30, acpSettledSameKindToolPermissionRequestedCount: 29,
     });
     expect(JSON.stringify(result)).not.toContain("private");
   });
@@ -490,7 +492,8 @@ describe("run failure diagnostics", () => {
         acpLastEventAgeMs: value, acpObservedEventCount: value, acpPendingToolCount: value,
         acpToolInventoryComplete: value, acpLastEventAgeAtStopMs: value, acpOldestPendingToolAgeAtStopMs: value,
         acpStalledToolSilentMs: value, acpStalledToolPermissionRequested: value,
-        acpPendingToolPermissionRequestedCount: value,
+        acpPendingToolPermissionRequestedCount: value, acpSettledSameKindToolCount: value,
+        acpSettledSameKindToolPermissionRequestedCount: value,
       } }), {});
       expect(result.execution).toEqual({});
     },

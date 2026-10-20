@@ -6,17 +6,19 @@ navigation: {"section":"Oversight and operation","sectionOrder":70,"order":30}
 
 People organize their sidebar, move between company resources, maintain their profile, and dismiss product announcements with the correct persistence and identity scope.
 
+Feature ID: `navigation-preferences`.
+
 Implementation: [sidebar](../../ui/src/components/Sidebar.tsx), [profile](../../ui/src/pages/ProfileSettings.tsx), [announcements](../../ui/src/components/AnnouncementWell.tsx).
 
 Agent access: [companion](../agent-access-map/navigation-preferences.md).
 
 ## Sub-features
 
-- `navigation`: use current sidebar links, favorites, recents, and available layout controls.
-- `preferences`: persist supported ordering/collapse choices for the intended user/company.
-- `profile`: edit personal identity and inspect public profile links.
-- `announcements`: inspect and dismiss an announcement with its intended instance-wide user scope.
-- `fallbacks`: handle missing resources and old deep links without presenting another resource as the target.
+- `navigation`: `navigation-preferences/navigation` — use current sidebar links, favorites, recents, and available layout controls.
+- `preferences`: `navigation-preferences/preferences` — persist supported ordering/collapse choices for the intended user/company.
+- `profile`: `navigation-preferences/profile` — edit personal identity and inspect public profile links.
+- `announcements`: `navigation-preferences/announcements` — inspect and dismiss an announcement with its intended instance-wide user scope.
+- `fallbacks`: `navigation-preferences/fallbacks` — handle missing resources and old deep links without presenting another resource as the target.
 
 ## How to get to it (user POV)
 
@@ -59,6 +61,8 @@ Manual: Change a disposable user’s display details, reload, and inspect an att
 
 #### `preferences`
 
+Capability ID: `navigation-preferences/preferences`.
+
 Scope: ui
 Storybook: Mount Sidebar using real preference boundary with stars/order/collapse/recents state. Clearly distinguish in-memory section collapse, browser-local recents and server-saved stars/order.
 Production: GET/PUT /sidebar-preferences/me and /companies/{id}/sidebar-preferences/me plus stars must retain intended user/company isolation across reload and switch. Section collapse reopens after reload; global collapse is disabled.
@@ -66,7 +70,17 @@ Sources: Source: [Sidebar.tsx](../../ui/src/components/Sidebar.tsx), [sidebar-pr
 
 #### `fallbacks`
 
+Capability ID: `navigation-preferences/fallbacks`.
+
 Scope: browser
 Storybook: A NotFound rendering story can help polish, but missing-resource/legacy-deep-link capability principally needs real App/router/browser scenarios preserving company and query intent.
 Production: Cold-open invalid company/resource and retired URL; verify explicit fallback or correct canonical redirect without silently targeting a different resource/company.
 Sources: Source: [NotFound.tsx](../../ui/src/pages/NotFound.tsx), [App.tsx](../../ui/src/App.tsx), [company-routes.ts](../../ui/src/lib/company-routes.ts). Tests: [App.activity-routing.test.tsx](../../ui/src/App.activity-routing.test.tsx), [App.cases-routing.test.tsx](../../ui/src/App.cases-routing.test.tsx), [App.test.tsx](../../ui/src/App.test.tsx), [company-routes.test.ts](../../ui/src/lib/company-routes.test.ts)
+
+### Recent task refresh performance
+
+Saved recent tasks render immediately. One summary batch refreshes at most five
+IDs per company/account without passive full-detail or workspace inspection.
+Successful omissions remove unavailable entries; failed reads preserve history.
+Verify rename, inbox archive, pause/restart, reload, cross-tab updates and account
+switches. Inbox archive does not remove the task from recent history.

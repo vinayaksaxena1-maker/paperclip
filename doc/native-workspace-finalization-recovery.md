@@ -360,6 +360,28 @@ provider still holds the original bytes or that copy-back succeeded. Operators
 must verify and recover the exact source separately. Later successful runs and
 completed tasks do not certify recovery of earlier workspace files.
 
+### Quiet task recovery and provider verification
+
+The task conversation does not ask its user to certify recovered infrastructure
+files. A source-bound recovery with a live native run or an eligible future
+bounded retry uses the normal working presentation. A missed retry, exhausted
+budget, unknown action outcome, or unresolved file hold remains visible. The
+notice gives a brief explanation and a run-inspection link; stored diagnostics
+and operator guidance remain under Recovery details. Source-only repair remains
+available through the board-authorized recovery resolution API and its original
+stop-receipt and evidence checks.
+
+Remote provider-pack verification retries an interrupted read at most once.
+Each command retains its 30-second transport timeout. A timeout, signal, absent
+exit status, or transport exception does not prove artifact incompatibility.
+Two inconclusive attempts hold the original run with
+`runner_remote_provider_verification_unavailable`. Reattachment does not spend
+a new provider attempt, so it cannot renew this exhausted read budget. A
+completed nonzero verification, digest mismatch, or
+wrong OpenCode version remains incompatible and cannot authorize a new provider
+turn. Recovery retains the exact source workspace and existing ownership gates;
+these read-only retries do not replay tools or alter a retained pack.
+
 ### Continue after confirmed source destruction
 
 When an old export failed and its exact sandbox has a confirmed destruction

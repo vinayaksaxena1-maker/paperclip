@@ -4,12 +4,17 @@ import { museAgentBindings as bindings, mcpOauthGrants, type Db } from "@papercl
 import { museRunnerBroker } from "./muse-runner-broker.js";
 import { museReceiver } from "./muse-receiver.js";
 /** Deadline authority lives in the database; every fresh process recovers it. */
-export function startMuseMaintenance(db:Db) {
+export function startMuseMaintenance(db:Db, options: { isBackgroundWorkEnabled?: () => boolean } = {}) {
   const broker=museRunnerBroker(db),receiver=museReceiver(db);
-  let running=false;
+  const isBackgroundWorkEnabled=options.isBackgroundWorkEnabled??(()=>true);
+  let running=false, startupMarked=false;
   const sweep=async()=>{
-    if(running)return;running=true;
+    if(running||!isBackgroundWorkEnabled())return;running=true;
     try{
+      if(!startupMarked){
+        await db.update(bindings).set({cadenceEvidenceIncompleteAt:new Date()}).where(and(isNull(bindings.revokedAt),gt(bindings.qualificationExpiresAt,new Date())));
+        startupMarked=true;
+      }
       let after:string|undefined;
       while(true) {
         const expired=await db.select().from(bindings).where(and(isNull(bindings.revokedAt),lte(bindings.qualificationExpiresAt,new Date()),after?gt(bindings.id,after):undefined)).orderBy(asc(bindings.id)).limit(100);
@@ -30,9 +35,7 @@ export function startMuseMaintenance(db:Db) {
       }
     }finally{running=false;}
   };
-  // A process restart loses any not-yet-persisted ingress tail. It is explicit
-  // incomplete qualification evidence even when subsequent traffic is healthy.
-  void db.update(bindings).set({cadenceEvidenceIncompleteAt:new Date()}).where(and(isNull(bindings.revokedAt),gt(bindings.qualificationExpiresAt,new Date()))).then(()=>sweep()).catch(()=>{logger.warn("Muse startup qualification evidence marking failed.");});
+  void sweep().catch(()=>{logger.warn("Muse startup qualification evidence marking failed.");});
   const timer=setInterval(()=>void sweep().catch(()=>{logger.warn("Muse maintenance sweep failed; persisted authority checks remain active.");}),5000);timer.unref();receiver.start();
   return async()=>{clearInterval(timer);await receiver.stop();};
 }

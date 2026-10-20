@@ -6,17 +6,19 @@ navigation: {"section":"Oversight and operation","sectionOrder":70,"order":40}
 
 An operator can install and run Paperclip, diagnose the instance, configure supported deployment settings, manage its service, and produce a recoverable database backup.
 
+Feature ID: `instance-operations`.
+
 Implementation: [CLI entry point](../../cli/src/index.ts), [instance settings](../../ui/src/pages/InstanceExperimentalSettings.tsx), [backup command](../../cli/src/commands/db-backup.ts).
 
 Agent access: [companion](../agent-access-map/instance-operations.md).
 
 ## Sub-features
 
-- `install-update`: inspect install channel/version and apply supported update or rollback operations.
-- `server-service`: start/stop the intended instance and inspect its service health.
-- `configuration`: configure database, server binding, storage, secrets, and available experimental settings.
-- `diagnostics`: use doctor/health output to distinguish readiness from a listening port.
-- `backup`: create and inspect backups and verify restore only into a separate disposable target.
+- `install-update`: `instance-operations/install-update` — inspect install channel/version and apply supported update or rollback operations.
+- `server-service`: `instance-operations/server-service` — start/stop the intended instance and inspect its service health.
+- `configuration`: `instance-operations/configuration` — configure database, server binding, storage, secrets, and available experimental settings.
+- `diagnostics`: `instance-operations/diagnostics` — use doctor/health output to distinguish readiness from a listening port.
+- `backup`: `instance-operations/backup` — create and inspect backups and verify restore only into a separate disposable target.
 
 ## How to get to it (user POV)
 
@@ -60,6 +62,21 @@ Automated: [experimental settings](../../ui/src/pages/InstanceExperimentalSettin
 
 Manual: Change a harmless experimental setting, reload, and confirm the affected route honors it. Back up a disposable instance, inspect the reported file and metadata, and restore using the documented procedure into a second isolated target. Verify a known record after restoration.
 
+Cloud staging: On a managed `*.staging.paperclip.app` instance, verify experiments
+are visible, Cloud-enabled controls are locked on, and other experiments are
+editable by a Cloud stack Admin or instance admin with changes surviving reload.
+With an old stored false value and a Cloud true value, verify the effective
+setting is true and an API attempt to disable it returns 403 without saving.
+Repeat the enabled-feature check on production and managed stacks without a hostname.
+As a stack Admin, verify a harmless experiment saves while general instance
+settings and task-drain operations remain denied. Demote that user to Member
+and verify the next experimental write is denied.
+Production keeps its hidden controls and managed feature values. Staging retains
+other Cloud restrictions. [Settings policy tests](../../server/src/__tests__/instance-settings-managed-overlay.test.ts),
+[route tests](../../server/src/__tests__/instance-settings-routes.test.ts), and
+[health tests](../../server/src/__tests__/health.test.ts) exercise simulated Cloud
+identities and persistence; they do not establish a deployed staging walkthrough.
+
 ## Gotchas
 
 - Source-checkout update/check commands report manual update guidance; they do
@@ -75,6 +92,8 @@ Manual: Change a harmless experimental setting, reload, and confirm the affected
 
 #### `backup`
 
+Capability ID: `instance-operations/backup`.
+
 Scope: ui
 Storybook: Mount shipped InstanceGeneralSettings in CompanySettings with daily/weekly/monthly retention presets, selected values, saving/error/loading and cloud-hidden controls. Backup creation and restore remain separate CLI/operator checks.
 Production: PATCH /api/instance/settings/general must enforce instance settings authority and managed hidden fields, persist retention and survive reload. Separately inspect a real backup and restore a known record into a second disposable target; a successful write does not prove restoration.
@@ -82,12 +101,16 @@ Sources: Source: [InstanceGeneralSettings.tsx](../../ui/src/pages/InstanceGenera
 
 #### `install-update`
 
+Capability ID: `instance-operations/install-update`.
+
 Scope: cli
 Storybook: No authored story required for install, channel selection, update or rollback command execution.
 Production: Use an owned managed installation: check/dry-run, installed version, retained payload rollback and failure. Source-checkout guidance is a separate case; rollback does not undo database migrations.
 Sources: Source: [index.ts](../../cli/src/index.ts), [install.ts](../../cli/src/commands/install.ts), [update.ts](../../cli/src/commands/update.ts). Tests: [install-command.test.ts](../../cli/src/__tests__/install-command.test.ts), [update-command.test.ts](../../cli/src/__tests__/update-command.test.ts)
 
 #### `diagnostics`
+
+Capability ID: `instance-operations/diagnostics`.
 
 Scope: cli
 Storybook: No authored story required for doctor/health command results.

@@ -6,17 +6,19 @@ navigation: {"section":"Apps, channels, and extensions","sectionOrder":50,"order
 
 People can talk to an assigned agent through configured external channels, bind their identity, exchange files, and inspect delivery state. Each provider has a different identity, threading, and attachment contract.
 
+Feature ID: `chat-channels`.
+
 Implementation: [endpoint setup](../../ui/src/pages/apps/chat/ChatEndpointSetup.tsx), [endpoint detail](../../ui/src/pages/apps/chat/ChatEndpointDetail.tsx), [email setup](../../ui/src/pages/apps/chat/EmailEndpointSetup.tsx).
 
 Agent access: [companion](../agent-access-map/chat-channels.md).
 
 ## Sub-features
 
-- `providers`: configure the available Slack, Discord, Microsoft Teams, Telegram, GitHub, AgentMail, and experimental iMessage Photon and Speko paths; availability still depends on gates and provider support.
-- `identity`: link the external sender to the intended authorized Paperclip identity.
-- `conversation`: route inbound messages to the selected agent and send replies to the correct thread.
-- `attachments`: transfer supported files with inspectable delivery and failure states.
-- `lifecycle`: inspect endpoint activity, repair auth, and disable delivery when required.
+- `providers`: `chat-channels/providers` — configure the available Slack, Discord, Microsoft Teams, Telegram, GitHub, AgentMail, and experimental iMessage Photon and Speko paths; availability still depends on gates and provider support.
+- `identity`: `chat-channels/identity` — link the external sender to the intended authorized Paperclip identity.
+- `conversation`: `chat-channels/conversation` — route inbound messages to the selected agent and send replies to the correct thread.
+- `attachments`: `chat-channels/attachments` — transfer supported files with inspectable delivery and failure states.
+- `lifecycle`: `chat-channels/lifecycle` — inspect endpoint activity, repair auth, and disable delivery when required.
 
 ## How to get to it (user POV)
 
@@ -40,7 +42,26 @@ Setup is covered in [connection setup](./connection-setup.md).
 
 Automated: [channel integration](../../server/src/__tests__/chat-channels.integration.test.ts) uses provider fixtures; it does not prove a live Slack, Discord, Teams, Telegram, GitHub, email, or Photon delivery.
 
+GitHub review comment regression (2026-10-19): repeated PR review requests reuse
+one main App comment, including across restart and reconnect. Test a leading
+request for an external bot (`@greptile review`) and verify it creates no wake or
+acknowledgement. Stop execution before a milestone is staged, run maintenance,
+and verify the existing comment reports the stop; saved requests on a blocked
+task show paused state. Preserve newer progress and confirmed or uncertain replies.
+Repeat terminal reconciliation with native identity and no legacy wake fields.
+Check delayed acknowledgements, check-only assessments followed by formal reviews,
+and combined requests with separate pre-upgrade placeholders.
+
 Manual: For each supported provider being changed, send a unique message, verify the intended agent/company receives it, and inspect the actual external reply in the original thread. Repeat with an unlinked/unauthorized sender, duplicate inbound delivery, and one supported attachment. Record provider-specific results separately.
+
+GitHub review prompt regression: open a PR and push twice. Each task message
+contains the event and commit identifiers; configuration comes from the admitted
+delivery snapshot and the PR description is fetched when needed. Inspect the
+native provider's submitted envelopes: a verified resume sends only the current
+batch and any changed configuration, while a fresh session receives full review
+instructions and task context. Change configuration between pushes and verify
+the queued older request retains its original snapshot. Integration fixtures
+cover the database and prompt contracts; they do not prove live provider delivery.
 
 For Slack, enable **Require at-mention** and **Allow direct messages**. Send a
 plain DM and follow up without a mention: both should reach the agent, with
@@ -75,11 +96,42 @@ identical catalog membership, absence of digest SQL during discovery, and
 revocation on the next preparation. A faster component is not proof of a faster
 Slack reaction or final reply; measure those separately on the deployed revision.
 
+For GitHub and Slack tool continuity, start a task from the channel, then admit
+a later monitor or retry run for the same task. Check that the later run can
+discover and call its channel tools without a new inbound message. For GitHub,
+also continue from a board message by the same accepted requester and complete
+the review in the original conversation, including when the original source is
+recorded only in legacy wake metadata. Revoke the linked identity and check
+that the next call fails. Repeat the boundary checks with another task, agent,
+company, and requester. The channel and provenance fixtures above cover these
+contracts with synthetic providers; record a live journey separately.
+For a long-lived task, repeat more than 100 continuations and check that tool
+access remains available. Fail a later GitHub run after a final answer and
+check that the earlier answer remains intact.
+
 ### `endpoint-management`
 
 Automated: [channel integration](../../server/src/__tests__/chat-channels.integration.test.ts) covers shared endpoint/delivery behavior; live credential repair and provider ownership remain manual checks.
 
 Manual: Inspect the bound agent and identity, recent activity, and delivery failure details. Repair a disposable credential, retry a safe message when offered, and verify exactly one external reply. Disable the endpoint and confirm new traffic is not silently processed.
+
+For publication failures, reject one operation with a provider 403 and verify
+that its failure remains visible while unrelated tools and publications continue.
+Repeat with an authentication failure: the endpoint must require attention and
+stop provider traffic, while the connection's enabled setting remains unchanged.
+Reconcile persistent receivers and restart the service; authentication failures
+must remain stopped while transient disconnections can still recover.
+The PostgreSQL suite uses controlled provider failures for these cases; live
+provider credential repair remains a separate acceptance check.
+
+GitHub connections in attention or revoked state show a repair notice above the
+settings. **Reconnect GitHub → Reconnect saved App** checks the same App with
+stored credentials and repairs delivery. **Replace App credentials** is the
+fallback, with the saved App ID, a link to its GitHub settings, and PEM upload or
+paste instructions. The production management Storybook's **04 Recovery** group
+covers these views, pending/failure/success, mobile, and light theme with simulated
+provider responses. Verify actual credential validity and restored delivery
+separately against GitHub; a Storybook success does not establish live recovery.
 
 For GitHub, submit a disposable PR and verify the summary heading uses the bot's
 display name and the check remains **Paperclip Review**. For two separate bots on one PR, verify
@@ -87,7 +139,11 @@ their App-scoped checks and comments remain independent.
 
 For GitHub publication recovery, interrupt a response after GitHub accepts a
 write and verify one summary, finding, and App-scoped check. Retry the same tool
-call and verify it returns the saved receipt. Leave a transient failure queued,
+call and verify it returns the saved receipt. Include text longer than 500
+characters and coverage with more than 50 entries. Change only the text suffix
+or final coverage entry and verify rejection without another write. Remove the
+durable publication and verify that a retry cannot dispatch a new write.
+Leave a transient failure queued,
 restart the instance, and verify publication resumes at its saved deadline
 without another inbound message. Revoked access and permanent rejections must
 stop retries. These recipes are separate from live provider proof.
@@ -119,6 +175,8 @@ or telephone playback. Those provider outcomes remain explicit release gates.
 ### Storybook verification
 
 #### `attachments`
+
+Capability ID: `chat-channels/attachments`.
 
 Scope: ui
 Storybook: Mount TaskChatBubble attachments and ChatEndpointDetail provider-specific consent/upload/delivery failure and unknown-outcome states. Local email attachment dialog remains a prototype.

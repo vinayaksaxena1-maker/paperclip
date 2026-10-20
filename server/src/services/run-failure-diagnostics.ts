@@ -314,7 +314,8 @@ export function collectRunFailureDiagnostics(run: Run, options: RunFailureReport
   for (const field of [
     "acpLastEventAgeMs", "acpObservedEventCount", "acpPendingToolCount",
     "acpLastEventAgeAtStopMs", "acpOldestPendingToolAgeAtStopMs", "acpStalledToolSilentMs",
-    "acpPendingToolPermissionRequestedCount",
+    "acpPendingToolPermissionRequestedCount", "acpSettledSameKindToolCount",
+    "acpSettledSameKindToolPermissionRequestedCount",
   ]) {
     const value = read(result, field);
     if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) execution[field] = value;

@@ -136,6 +136,7 @@ export async function prepareHeartbeatTaskContext(db: Db, input: HeartbeatTaskCo
           workMode: issueRef.workMode,
           projectId: issueRef.projectId,
           executionPolicy: issueContext?.executionPolicy ?? null,
+          originKind: issueContext?.originKind ?? null,
         }
       : null,
     exposeLowTrustRaw,

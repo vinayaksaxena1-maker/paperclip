@@ -6,16 +6,18 @@ navigation: {"section":"Automation and structured work","sectionOrder":60,"order
 
 The cases experiment exposes structured records with types, fields, parent/child relationships, activity, revisions, and related task work.
 
+Feature ID: `cases`.
+
 Implementation: [case list](../../ui/src/pages/Cases.tsx), [case detail](../../ui/src/pages/CaseDetail.tsx).
 
 Agent access: [companion](../agent-access-map/cases.md).
 
 ## Sub-features
 
-- `browse`: search, filter, sort, group, and navigate case records.
-- `structure`: inspect fields and parent/child relationships without losing matching descendants.
-- `history`: inspect revisions and activity for a record.
-- `task-links`: follow work associated with a case in both directions.
+- `browse`: `cases/browse` — search, filter, sort, group, and navigate case records.
+- `structure`: `cases/structure` — inspect fields and parent/child relationships without losing matching descendants.
+- `history`: `cases/history` — inspect revisions and activity for a record.
+- `task-links`: `cases/task-links` — follow work associated with a case in both directions.
 
 ## How to get to it (user POV)
 
@@ -44,8 +46,7 @@ Automated: [case routes](../../server/src/__tests__/cases-routes.test.ts) covers
 Manual: Change status or labels, reload, inspect activity, and follow child/task
 links. Edit a case document and inspect its document revisions separately.
 Arbitrary JSON fields are currently displayed without a general field editor.
-Verify cross-company and invalid changes fail clearly. Distinguish a
-pipeline-owned item from a stand-alone case.
+Verify cross-company and invalid changes fail clearly.
 
 ## Gotchas
 
@@ -58,6 +59,8 @@ pipeline-owned item from a stand-alone case.
 
 #### `browse`
 
+Capability ID: `cases/browse`.
+
 Scope: ui
 Storybook: Mount Cases search/filter/sort/group/tree, matched-child parent context, persisted view choices, keyboard navigation and empty/loading/error.
 Production: GET /companies/{id}/cases scope/filter behavior is production evidence; rendered fixtures establish presentation only. Mutation/permission scenarios need real API checks separately.
@@ -65,12 +68,16 @@ Sources: Source: [Cases.tsx](../../ui/src/pages/Cases.tsx), [cases.ts](../../ser
 
 #### `structure`
 
+Capability ID: `cases/structure`.
+
 Scope: ui
 Storybook: Mount CaseDetail and CaseFieldsPanel with arbitrary JSON fields and parent/children, matching descendants and unavailable child. Do not invent a general field editor or typed field validation.
-Production: GET /cases/{id} and /cases/{id}/children/tree must return permitted company records and correct relationships; changes/persistence require route tests separately.
-Sources: Source: [CaseDetail.tsx](../../ui/src/pages/CaseDetail.tsx), [CaseFieldsPanel.tsx](../../ui/src/components/CaseFieldsPanel.tsx), [Cases.tsx](../../ui/src/pages/Cases.tsx), [cases.ts](../../server/src/routes/cases.ts), [pipelines.ts](../../server/src/routes/pipelines.ts). Tests: [CaseFieldsPanel.test.tsx](../../ui/src/components/CaseFieldsPanel.test.tsx), [Cases.test.tsx](../../ui/src/pages/Cases.test.tsx), [CaseDetail.test.tsx](../../ui/src/pages/CaseDetail.test.tsx), [cases-routes.test.ts](../../server/src/__tests__/cases-routes.test.ts)
+Production: GET /cases/{id} must return permitted company records and correct relationships; changes/persistence require route tests separately.
+Sources: Source: [CaseDetail.tsx](../../ui/src/pages/CaseDetail.tsx), [CaseFieldsPanel.tsx](../../ui/src/components/CaseFieldsPanel.tsx), [Cases.tsx](../../ui/src/pages/Cases.tsx), [cases.ts](../../server/src/routes/cases.ts). Tests: [CaseFieldsPanel.test.tsx](../../ui/src/components/CaseFieldsPanel.test.tsx), [Cases.test.tsx](../../ui/src/pages/Cases.test.tsx), [CaseDetail.test.tsx](../../ui/src/pages/CaseDetail.test.tsx), [cases-routes.test.ts](../../server/src/__tests__/cases-routes.test.ts)
 
 #### `history`
+
+Capability ID: `cases/history`.
 
 Scope: ui
 Storybook: Mount CaseDetail activity and document revisions as distinct views, empty/loading/errors, attribution and source links.
@@ -79,7 +86,9 @@ Sources: Source: [CaseDetail.tsx](../../ui/src/pages/CaseDetail.tsx), [cases.ts]
 
 #### `task-links`
 
+Capability ID: `cases/task-links`.
+
 Scope: ui
 Storybook: Mount CaseDetail and IssueCasesPanel related-task/case links in both directions, missing links and unavailable targets.
-Production: GET /issues/{id}/cases and /cases/{id}/issue-links must enforce permitted task/case relationships; production browser cold links verify destination and company context.
-Sources: Source: [CaseDetail.tsx](../../ui/src/pages/CaseDetail.tsx), [IssueCasesPanel.tsx](../../ui/src/components/IssueCasesPanel.tsx), [cases.ts](../../server/src/routes/cases.ts), [pipelines.ts](../../server/src/routes/pipelines.ts). Tests: [IssueCasesPanel.test.tsx](../../ui/src/components/IssueCasesPanel.test.tsx), [CaseDetail.test.tsx](../../ui/src/pages/CaseDetail.test.tsx), [cases-routes.test.ts](../../server/src/__tests__/cases-routes.test.ts)
+Production: GET /issues/{id}/cases and GET /cases/{id} must enforce permitted task/case relationships; production browser cold links verify destination and company context.
+Sources: Source: [CaseDetail.tsx](../../ui/src/pages/CaseDetail.tsx), [IssueCasesPanel.tsx](../../ui/src/components/IssueCasesPanel.tsx), [cases.ts](../../server/src/routes/cases.ts). Tests: [IssueCasesPanel.test.tsx](../../ui/src/components/IssueCasesPanel.test.tsx), [CaseDetail.test.tsx](../../ui/src/pages/CaseDetail.test.tsx), [cases-routes.test.ts](../../server/src/__tests__/cases-routes.test.ts)

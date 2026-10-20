@@ -6,17 +6,19 @@ navigation: {"section":"Apps, channels, and extensions","sectionOrder":50,"order
 
 After connecting an app, an operator decides which agents may use it and whether each action is off, requires approval, or is allowed. Activity and action tests help verify the resulting access.
 
+Feature ID: `app-permissions`.
+
 Implementation: [app detail](../../ui/src/pages/apps/AppDetail.tsx), [permissions](../../ui/src/pages/apps/app-detail/PermissionsPanel.tsx), [activity](../../ui/src/pages/apps/app-detail/ActivityPanel.tsx).
 
 Agent access: [companion](../agent-access-map/app-permissions.md).
 
 ## Sub-features
 
-- `agent-access`: grant the connection to all or selected eligible agents.
-- `action-policy`: set off/ask/allowed independently for available actions.
-- `catalog-change`: review newly discovered/quarantined actions before enabling them.
-- `test-action`: choose an actor and inputs and inspect a real action result.
-- `account-maintenance`: inspect accounts, reconnect/revoke, and review connection activity.
+- `agent-access`: `app-permissions/agent-access` — grant the connection to all or selected eligible agents.
+- `action-policy`: `app-permissions/action-policy` — set off/ask/allowed independently for available actions.
+- `catalog-change`: `app-permissions/catalog-change` — review newly discovered/quarantined actions before enabling them.
+- `test-action`: `app-permissions/test-action` — choose an actor and inputs and inspect a real action result.
+- `account-maintenance`: `app-permissions/account-maintenance` — inspect accounts, reconnect/revoke, and review connection activity.
 
 ## How to get to it (user POV)
 
@@ -42,6 +44,19 @@ rollback, and concurrent AI adoption. The owning lifecycle plugin can read
 standing assignments through `ctx.agents.getRuntime`; this does not grant tool
 execution access or replace task-specific authorization.
 
+[Tool-definition runtime tests](../../server/src/__tests__/agent-runtime-tool-definitions.test.ts)
+cover catalog invalidation, scoped policy/profile-entry recipients, ignored
+bookkeeping, profile-entry edits concurrent with setup finalization, and profile
+replacement concurrent with application deletion using PostgreSQL. They do not
+qualify live provider access.
+
+[Connector access runtime tests](../../server/src/__tests__/agent-runtime-connector-access.test.ts)
+cover grants, delegation, membership cleanup, referenced vault changes, and
+agent-scoped secret bindings. OAuth and Railway tests exercise the corresponding
+credential lock order. Slack search and membership cleanup tests cover lock
+contention and complete transaction retries. Provider calls use fixtures; no live credentials are
+qualified by this coverage.
+
 Manual: Grant one agent access, leave another excluded, and exercise off, ask, and allowed states for a harmless action. Reload between changes. Verify actual denied calls stay denied and ask-first creates a decision rather than executing early.
 
 ### `test-and-maintain`
@@ -66,6 +81,8 @@ run-bound file transfers, and revocation with fixture provider responses.
 ### Storybook verification
 
 #### `catalog-change`
+
+Capability ID: `app-permissions/catalog-change`.
 
 Scope: ui
 Storybook: Mount PermissionsPanel/AppDetail with quarantined actions, selection/review, refresh pending, empty and failed discovery states. Existing auto-allowed NewToolsAllowed examples are not quarantine review.
